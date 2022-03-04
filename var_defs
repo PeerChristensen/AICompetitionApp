@@ -1,0 +1,17 @@
+PclassPassenger Class  (1 = 1st; 2 = 2nd; 3 = 3rd)
+survival    Survival  (0 = No; 1 = Yes)
+name Name
+sex   Sex
+ageAge
+sibsp Number of Siblings/Spouses Aboard
+parchNumber of Parents/Children Aboard
+ticket Ticket Number
+fare Passenger Fare (British pound)
+cabin Cabin 
+embarked Port of Embarkation (C = Cherbourg; Q = Queenstown; S = Southampton)
+
+boat Lifeboat
+body Body Identification Number
+home.destHome/Destination
+
+Ticket, Cabin, Name
