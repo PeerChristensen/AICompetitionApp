@@ -86,6 +86,11 @@ ui <- fluidPage(theme = theme,
                         min = 1,
                         max = 10,
                         value = 5),
+            textInput("name", "Dit navn"),
+            textInput("mail", "E-mailadresse"),
+            textInput("company", "Virksomhed"),
+            textInput("initials", "Dine initialer (vises på leaderboard)"),
+            checkboxInput("confirm", p("JVed at deltage, godkender jeg",tags$a(href="https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),  "for opbevaring af mine data *"),FALSE),
             column(12,actionButton("start","Start!"), 
                    align = "center",
                    style = "margin-top: 50px;")
@@ -117,6 +122,25 @@ ui <- fluidPage(theme = theme,
 ### SERVER ###
 
 server <- function(input, output, session) {
+      
+      observeEvent(input$start, {
+        
+        name    <- input$name
+        company <- input$company
+        mail    <- input$mail
+        initials <- input$initials
+        score = acc()
+        permission = input$confirm
+        
+        data <- tibble(name,company,mail,initials,score, permission)
+        
+        # write to SQL
+        
+        # send to blob
+        filename <- paste0(mail,".csv")
+        write_csv(data,filename)
+        
+      })
 
       acc <- eventReactive(input$start,{
         train <- train %>% select(all_of(input$vars),Survived)
