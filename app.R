@@ -11,6 +11,7 @@ library(mlr)
 library(shinyvalidate)
 library(AzureStor)
 
+# CONNECTING TO BLOB STORAGE
 readRenviron(".Renviron")
 sas_token <- Sys.getenv("SAS_TOKEN")
 endpoint <- storage_endpoint("https://demoeventstorage.blob.core.windows.net", sas=sas_token)
@@ -98,9 +99,7 @@ ui <- fluidPage(theme = theme,
             checkboxInput("confirm", p("Ved at deltage, godkender jeg",tags$a(href="https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),  "for opbevaring af mine data *"),FALSE),
             column(12,actionButton("start","Start!"), 
                    align = "center",
-                   style = "margin-top: 50px;"),
-            bsTooltip(id = "someInput", title = "This is an input", 
-                      placement = "left", trigger = "hover")
+                   style = "margin-top: 50px;")
         ),
         tabsetPanel(
             tabPanel("Hovedside",
@@ -125,13 +124,13 @@ ui <- fluidPage(theme = theme,
     )
 )
 
-
 ### SERVER ###
 
 server <- function(input, output, session) {
       
       observeEvent(input$start, {
         
+        # Validate input
         iv <- InputValidator$new()
         iv$add_rule("name", sv_required(message = "Påkrævet"))
         iv$add_rule("company", sv_required(message = "Påkrævet"))
@@ -140,15 +139,17 @@ server <- function(input, output, session) {
         iv$add_rule("confirm", sv_equal(TRUE, 
                                         message_fmt = "Godkend venligst for at deltage i konkurrencen"))
         iv$enable()
-      
+        
+        # Collect user data and score
         name    <- input$name
         company <- input$company
         mail    <- input$mail
         initials <- input$initials
         score = acc()
         permission = input$confirm
-        
         data <- tibble(name,company,mail,initials,score, permission)
+        
+        # write csv
         filename <- paste0(mail,".csv")
         write_csv(data, filename, col_names = F)
         
@@ -161,6 +162,7 @@ server <- function(input, output, session) {
         # store backup file
         storage_upload(container, src=filename, dest=paste0("archive/", filename))
         
+        # reset input fields
         reset("vars")
         reset("mtry")
         reset("nodesize")
@@ -171,9 +173,9 @@ server <- function(input, output, session) {
         reset("initials")
         reset("confirm")
         
-        
       })
-
+      
+      # train model and get accuracy
       acc <- eventReactive(input$start,{
         
         train <- train %>% select(all_of(input$vars),Attrition)
