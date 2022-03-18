@@ -8,11 +8,18 @@ data <- titanic_train %>%
 	select(-all_of(drop_vars)) %>% 
 	mutate_if(is.character,factor) %>%
 	drop_na() %>%
-	as_tibble()
+	as_tibble() %>%
+	mutate(Survived = factor(Survived))
 
 ind <- createDataPartition(data$Survived, p=.75,list=FALSE)
 train <- data[ind,]
 test <- data[-ind,]
+
+train <- caret::downSample(train,train$Survived,list=F) %>%
+	as_tibble() %>%
+	select(-Class)
+
+#test <- caret::upSample(test,test$Survived,list=F)
 
 task = makeClassifTask(data = train, target = "Survived")
 clf = makeLearner("classif.randomForest", fix.factors.prediction = FALSE)

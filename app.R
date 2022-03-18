@@ -3,10 +3,18 @@ library(shinyWidgets)
 library(flexdashboard)
 library(bslib)
 library(shinyBS)
+library(shinyjs)
 library(shinydashboard)
 library(tidyverse)
 library(randomForest)
 library(mlr)
+library(shinyvalidate)
+library(AzureStor)
+
+readRenviron(".Renviron")
+sas_token <- Sys.getenv("SAS_TOKEN")
+endpoint <- storage_endpoint("https://demoeventstorage.blob.core.windows.net", sas=sas_token)
+container <- storage_container(endpoint, "aicompetition")
 
 ### STYLING ###
 gold  <- "#c39f5e"
@@ -29,25 +37,22 @@ css <- HTML("
        .irs-handle {background: #c39f5e !important;}")
 
 ### DATA ###
-vars  <- read_rds("vars.rds")
-train <- read_csv("titanic_train.csv") %>% 
-    mutate_if(is.character,factor) %>%
-    mutate(Survived = factor(Survived)) %>%
-    drop_na()
-test  <- read_csv("titanic_test.csv") %>% 
-    mutate_if(is.character,factor) %>%
-    mutate(Survived = factor(Survived)) %>%
-    drop_na()
+vars  <- read_rds("vars_attr.rds")
+train <- read_csv("attr_train.csv") %>% 
+    mutate_if(is.character,factor) 
+test  <- read_csv("attr_test.csv") %>% 
+    mutate_if(is.character,factor) 
 
 ### UI ###
 ui <- fluidPage(theme = theme,
+                useShinyjs(),
                 tags$head(tags$style(css)),
     titlePanel("Kapacity AI Udfordring"),
         sidebarLayout(
         sidebarPanel(width = 3,
             pickerInput("vars", 
                         label = tags$span(
-                          "Vælg features", 
+                          "Vælg features",
                           tags$i(
                             class = "glyphicon glyphicon-exclamation-sign", 
                             title = "Data er ikke gratis og der trækkes 2 procentpoint fra din score for hver ekstra variabel du inkluderer i din model efter de første tre."
@@ -90,10 +95,12 @@ ui <- fluidPage(theme = theme,
             textInput("mail", "E-mailadresse"),
             textInput("company", "Virksomhed"),
             textInput("initials", "Dine initialer (vises på leaderboard)"),
-            checkboxInput("confirm", p("JVed at deltage, godkender jeg",tags$a(href="https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),  "for opbevaring af mine data *"),FALSE),
+            checkboxInput("confirm", p("Ved at deltage, godkender jeg",tags$a(href="https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),  "for opbevaring af mine data *"),FALSE),
             column(12,actionButton("start","Start!"), 
                    align = "center",
-                   style = "margin-top: 50px;")
+                   style = "margin-top: 50px;"),
+            bsTooltip(id = "someInput", title = "This is an input", 
+                      placement = "left", trigger = "hover")
         ),
         tabsetPanel(
             tabPanel("Hovedside",
@@ -125,6 +132,15 @@ server <- function(input, output, session) {
       
       observeEvent(input$start, {
         
+        iv <- InputValidator$new()
+        iv$add_rule("name", sv_required(message = "Påkrævet"))
+        iv$add_rule("company", sv_required(message = "Påkrævet"))
+        iv$add_rule("initials", sv_required(message = "Påkrævet"))
+        iv$add_rule("mail", sv_email(message = "Indtast venligt en gyldig email"))
+        iv$add_rule("confirm", sv_equal(TRUE, 
+                                        message_fmt = "Godkend venligst for at deltage i konkurrencen"))
+        iv$enable()
+      
         name    <- input$name
         company <- input$company
         mail    <- input$mail
@@ -133,30 +149,47 @@ server <- function(input, output, session) {
         permission = input$confirm
         
         data <- tibble(name,company,mail,initials,score, permission)
-        
-        # write to SQL
-        
-        # send to blob
         filename <- paste0(mail,".csv")
-        write_csv(data,filename)
+        write_csv(data, filename, col_names = F)
+        
+        # append to leaderboard
+        storage_upload(container, src=filename, 
+                       dest="leaderboard/leaderboard.csv", 
+                       type="AppendBlob",
+                       append=TRUE)
+
+        # store backup file
+        storage_upload(container, src=filename, dest=paste0("archive/", filename))
+        
+        reset("vars")
+        reset("mtry")
+        reset("nodesize")
+        reset("maxnodes")
+        reset("name")
+        reset("mail")
+        reset("company")
+        reset("initials")
+        reset("confirm")
+        
         
       })
 
       acc <- eventReactive(input$start,{
-        train <- train %>% select(all_of(input$vars),Survived)
-        test <- test %>% select(all_of(input$vars),Survived)
-        task = makeClassifTask(data = train, target = "Survived")
+        
+        train <- train %>% select(all_of(input$vars),Attrition)
+        test <- test %>% select(all_of(input$vars),Attrition)
+        task = makeClassifTask(data = train, target = "Attrition")
         base_clf = makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
         tuned_clf = setHyperPars(base_clf, 
                                  ntree = 200,
                                  mtry = input$mtry, 
                                  nodesize = input$nodesize,
                                  maxnodes = input$maxnodes)
-        mod = train(tuned_clf, task)
+        mod = mlr::train(tuned_clf, task)
         pred = predict(mod, newdata = test)
-        n_vars = length(input$vars) - 3
+        n_vars = length(input$vars) - 8
         if (n_vars > 0) {
-          (round(calculateROCMeasures(pred)$measures$acc,4)*100) - (n_vars * 2)
+          (round(calculateROCMeasures(pred)$measures$acc,4)*100) - (n_vars * 1)
         } else {
           round(calculateROCMeasures(pred)$measures$acc,4)*100
           
