@@ -59,7 +59,7 @@ ui <- fluidPage(theme = theme,
                             title = "Data er ikke gratis og der trækkes 2 procentpoint fra din score for hver ekstra variabel du inkluderer i din model efter de første tre."
                           )),
                         choices = vars, 
-                        multiple = TRUE,
+                        multiple = TRUE
                         #options = list(`max-options` = 4)
                         ),
             sliderInput("mtry",
@@ -97,7 +97,9 @@ ui <- fluidPage(theme = theme,
             textInput("company", "Virksomhed"),
             textInput("initials", "Dine initialer (vises på leaderboard)"),
             checkboxInput("confirm", p("Ved at deltage, godkender jeg",tags$a(href="https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),  "for opbevaring af mine data *"),FALSE),
-            column(12,actionButton("start","Start!"), 
+            column(12,
+                   actionButton("start","Start!"), 
+                   actionButton("reset","Reset"),
                    align = "center",
                    style = "margin-top: 50px;")
         ),
@@ -110,7 +112,13 @@ ui <- fluidPage(theme = theme,
                     p("Der er hjælp at hente i fanen 'Definitioner' ovenfor."),
                     hr(),
                     h3("Din score"),
-                    gaugeOutput("gauge", height = "100%")
+                    gaugeOutput("gauge", height = "100%"),
+                    fluidRow(
+                      h3(textOutput("thanks",inline = TRUE),
+                       align = "left",
+                       style = "margin-left: 250px;"
+                    )
+                )
                 )
             ),
             tabPanel("Definitioner",
@@ -128,52 +136,82 @@ ui <- fluidPage(theme = theme,
 
 server <- function(input, output, session) {
       
+  
+  # Validate input
+  iv <- InputValidator$new()
+  iv$add_rule("name", sv_required(message = "Påkrævet"))
+  iv$add_rule("company", sv_required(message = "Påkrævet"))
+  iv$add_rule("initials", sv_required(message = "Påkrævet"))
+  iv$add_rule("mail", sv_email(message = "Indtast venligt en gyldig email"))
+  iv$add_rule("confirm", sv_equal(TRUE, 
+                                  message_fmt = "Godkend venligst for at deltage i konkurrencen"))
+  iv$disable()
+  
+  
       observeEvent(input$start, {
         
-        # Validate input
-        iv <- InputValidator$new()
-        iv$add_rule("name", sv_required(message = "Påkrævet"))
-        iv$add_rule("company", sv_required(message = "Påkrævet"))
-        iv$add_rule("initials", sv_required(message = "Påkrævet"))
-        iv$add_rule("mail", sv_email(message = "Indtast venligt en gyldig email"))
-        iv$add_rule("confirm", sv_equal(TRUE, 
-                                        message_fmt = "Godkend venligst for at deltage i konkurrencen"))
         iv$enable()
         
         # Collect user data and score
-        name    <- input$name
-        company <- input$company
-        mail    <- input$mail
-        initials <- input$initials
-        score = acc()
-        permission = input$confirm
-        data <- tibble(name,company,mail,initials,score, permission)
+        name       <- input$name
+        company    <- input$company
+        mail       <- input$mail
+        initials   <- input$initials
+        score      <- acc()
+        permission <- input$confirm
         
-        # write csv
-        filename <- paste0(mail,".csv")
-        write_csv(data, filename, col_names = F)
+        data <- tibble(name,company,mail,initials,score, permission) %>%
+          filter(permission==T, name != "", company!="",mail!="",initials!="")
         
-        # append to leaderboard
-        storage_upload(container, src=filename, 
+        if (nrow(data) == 1) { 
+          
+          # write csv
+          filename <- paste0(mail,".csv")
+          write_csv(data, filename, col_names = F)
+        
+          # append to leaderboard
+          storage_upload(container, src=filename, 
                        dest="leaderboard/leaderboard.csv", 
                        type="AppendBlob",
                        append=TRUE)
 
-        # store backup file
-        storage_upload(container, src=filename, dest=paste0("archive/", filename))
-        
-        # reset input fields
-        reset("vars")
-        reset("mtry")
-        reset("nodesize")
-        reset("maxnodes")
-        reset("name")
-        reset("mail")
-        reset("company")
-        reset("initials")
-        reset("confirm")
-        
-      })
+          # store backup file
+          storage_upload(container, src=filename, dest=paste0("archive/", filename))
+          
+          # Send thanks
+          delay(1500, 
+                output$thanks <- renderText({"Tak for din deltagelse!"}))
+          
+          iv$disable()
+          reset("vars")
+          reset("mtry")
+          reset("nodesize")
+          reset("maxnodes")
+          reset("name")
+          reset("mail")
+          reset("company")
+          reset("initials")
+          reset("confirm")
+          
+        } 
+    })
+  
+    observeEvent(input$reset, {
+      
+      iv$disable()
+      reset("vars")
+      reset("mtry")
+      reset("nodesize")
+      reset("maxnodes")
+      reset("name")
+      reset("mail")
+      reset("company")
+      reset("initials")
+      reset("confirm")
+      
+      output$gauge <- renderGauge({})
+      
+    })
       
       # train model and get accuracy
       acc <- eventReactive(input$start,{
@@ -184,20 +222,21 @@ server <- function(input, output, session) {
         base_clf = makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
         tuned_clf = setHyperPars(base_clf, 
                                  ntree = 200,
-                                 mtry = input$mtry, 
+                                 mtry  = input$mtry, 
                                  nodesize = input$nodesize,
                                  maxnodes = input$maxnodes)
         mod = mlr::train(tuned_clf, task)
         pred = predict(mod, newdata = test)
         n_vars = length(input$vars) - 8
+        
         if (n_vars > 0) {
           (round(calculateROCMeasures(pred)$measures$acc,4)*100) - (n_vars * 1)
         } else {
           round(calculateROCMeasures(pred)$measures$acc,4)*100
-          
         }
+        
     })
-    
+      
     output$gauge <- renderGauge({
     
         gauge(acc(), 
