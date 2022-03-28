@@ -61,15 +61,21 @@ ui <- fluidPage(
   useShinyjs(),
   tags$head(tags$style(css)),
   titlePanel("Kapacity AI Udfordring"),
-  fluidRow(h3("Kan du forudsige medarbejderflugt?"),
+  fluidRow(h3("Kan du løse din virksomheds udfordringer med medarbejderflugt ved hjælp af AI?"),
            style = "margin-left: 3px;"),
   fluidRow(
     p(
-      "Du er Data Scientist i en virksomhed der har et alvorligt problem med ansatte der forlader jer."
+      "I 2021 overvejede 40% af dine medarbejdere at opsige deres stilling. Det rødglødende arbejdsmarked har gjort topledelsen i din virksomhed særligt opmærksom på problemstillingen og den frygter en massiv medarbejderflugt det kommende år."
     ),
     p(
-      "Som et vigtigt led i jeres indsatser for at forebygge medarbejderflugt, skal du bygge en 'Random Forest' machine learning-model der forudsiger hvilke ansatte I risikerer at miste."
+      "Kan du træne en model, som finder ud af hvem det er, så du kan nå at forhindre det? Kan du træne en model, som finder ud af hvem det er, så du kan nå at forhindre det? Du skalbygge en model, der forudsiger hvilke ansatte I risikerer at miste."
     ),
+ #   p(
+#      "Du er Data Scientist i en virksomhed der har et alvorligt problem med ansatte der forlader jer."
+#    ),
+#    p(
+#      "Som et vigtigt led i jeres indsatser for at forebygge medarbejderflugt, skal du bygge en 'Random Forest' machine learning-model der forudsiger hvilke ansatte I risikerer at miste."
+#    ),
     p(
       "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."
     ),
