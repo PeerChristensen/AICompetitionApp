@@ -28,7 +28,7 @@ clf = makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
 clf = setHyperPars(clf, ntree = 200, mtry=8)#,maxnodes=1)
 
 # Train the learner
-mod = train(clf, task)
+mod = mlr::train(clf, task)
 
 pred = predict(mod, newdata = test)
 head(as.data.frame(pred))

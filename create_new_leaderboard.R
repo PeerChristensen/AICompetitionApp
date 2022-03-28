@@ -11,7 +11,6 @@ container <- storage_container(endpoint, "aicompetition")
 leaderboard <- tibble(
 					name = character(),
 					mail = character(), 
-					company = character(), 
 					initials = character(),
 					score = numeric(),
 					permission_mail = logical(),
