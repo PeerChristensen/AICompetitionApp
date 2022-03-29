@@ -12,6 +12,7 @@ library(mlr)
 library(shinyvalidate)
 library(AzureStor)
 
+
 # CONNECTING TO BLOB STORAGE
 readRenviron(".Renviron")
 sas_token <- Sys.getenv("SAS_TOKEN")
@@ -26,12 +27,12 @@ blue  <- "#85c8f0"
 
 
 theme <- bs_theme(
-  bg = "black",
-  fg = "white",
-  primary = gold,
-  secondary = gold,
+  #bg = "white",
+  #fg = "black",
+  primary = blue,
+  secondary = blue,
   base_font = font_google("Open Sans"),
-  heading_font = font_google("Ubuntu")
+  heading_font = font_google("Ubuntu"),
 )
 
 css <- HTML(
@@ -44,9 +45,28 @@ css <- HTML(
        .js-irs-0 .irs-bar-edge,
        .js-irs-0 .irs-bar,
        .js-irs-0 .irs-slider
-       {background: #c39f5e;}
-       .irs-handle {background: #c39f5e !important;}"
+       {background: #85c8f0;}
+       .irs-handle {background: #85c8f0 !important;}
+
+#title_panel {
+  background-color: black;
+  background: black;
+  color: white;
+  font-size: 30px;
+  margin:-1em;
+  padding: 1em}
+
+.form-control {
+  border-radius: 25px 25px 25px 25px;
+  border: 2px solid black}
+
+#sidebar {background-color: white;}
+
+"
 )
+
+black_style <- "padding:1em;background-color:black;color:white;"
+white_style <- "margin:0em;padding:2em;background-color:white;color:black;"
 
 ### DATA ###
 vars  <- read_rds("vars_attr.rds")
@@ -60,40 +80,62 @@ ui <- fluidPage(
   theme = theme,
   useShinyjs(),
   tags$head(tags$style(css)),
-  titlePanel("Kapacity AI Udfordring"),
-  fluidRow(h3("Kan du løse din virksomheds udfordringer med medarbejderflugt ved hjælp af AI?"),
-           style = "margin-left: 3px;"),
+  
+  # TITLE
+  titlePanel(h5(id = "title_panel", "kapacity")),
+  
+  # HEADER
   fluidRow(
-    p(
-      "I 2021 overvejede 40% af dine medarbejdere at opsige deres stilling. Det rødglødende arbejdsmarked har gjort topledelsen i din virksomhed særligt opmærksom på problemstillingen og den frygter en massiv medarbejderflugt det kommende år."
+    column(12,align = "center",style = black_style,
+           h1("AI konkurrence!")
+           )
     ),
-    p(
-      "Kan du træne en model, som finder ud af hvem det er, så du kan nå at forhindre det? Kan du træne en model, som finder ud af hvem det er, så du kan nå at forhindre det? Du skalbygge en model, der forudsiger hvilke ansatte I risikerer at miste."
+  
+  # INTRO
+  fluidRow(
+    column(4, style = black_style),
+    column(4,align="center",style = black_style,
+           p("Kan du træne vores AI-model, så du stopper medarbejderflugten i din virksomhed?")
     ),
- #   p(
-#      "Du er Data Scientist i en virksomhed der har et alvorligt problem med ansatte der forlader jer."
-#    ),
-#    p(
-#      "Som et vigtigt led i jeres indsatser for at forebygge medarbejderflugt, skal du bygge en 'Random Forest' machine learning-model der forudsiger hvilke ansatte I risikerer at miste."
-#    ),
-    p(
-      "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."
+    column(4, style = black_style)
+  ),
+  fluidRow(
+    column(4, style = black_style),
+    column(4, align="center", style = black_style,
+           p("Vi belønner dagens bedste forsøg med en champagne-smagekasse til en værdi af kr. 2.899,-")
     ),
+    column(4, style = black_style)
+  ),
+  
+  # INSTRUCTIONS
+  fluidRow(style="margin:0em:",
+    column(6,
+           h3("Start her!")
+           ),
+    column(6,
+    style = white_style,
     p(
-      "Din score viser andelen af korrekte gæt på hvorvidt hver af de 616 ansatte forlader jeres virksomhed. På vores leaderboard, kan du se hvor god din model var i forhold til andres."
-    ),
+      "Forestil dig at 40% af dine medarbejdere overvejer at opsige deres stilling. Din opgave er at træne en AI-model, der kan forudsige, hvilke ansatte det drejer sig om, så opsigelserne kan undgås."),
+    p(
+      "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."    ),
+    p(
+      "Din score viser andelen af korrekte gæt på hvorvidt hver af de 616 ansatte forlader jeres virksomhed. På vores leaderboard, kan du se hvor god din model var i forhold til andres."    ),
     p(
       "Du er velkommen til at prøve flere gange, men kun det bedste af dine tre første forsøg tæller med i konkurrencen."
+    ),
+    p(
+      "Deltagelse forudsætter tilmelding til Kapacitys nyhedsmail om AI."
+    ),
     )
-    ,
-    style = "margin-left: 3px;"
-  ),
+    ),
+  hr(),
+   
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(id="sidebar",
       width = 3,
-      textInput("name", "Dit navn"),
-      textInput("mail", "E-mailadresse"),
-      textInput("initials", "Dine initialer (vises på leaderboard)"),
+      textInput("name", label=NULL, placeholder = "Dit navn"),
+      textInput("mail", label=NULL, placeholder = "E-mailadresse"),
+      textInput("initials", label = NULL, placeholder = "Dine initialer (vises på leaderboard)"),
       checkboxInput(
         "confirm_mail_list",
         "Jeg accepterer at modtage relevante e-mails fra Kapacity *",
@@ -102,7 +144,7 @@ ui <- fluidPage(
       checkboxInput(
         "confirm",
         p(
-          "Ved at deltage, godkender jeg",
+          "Jeg godkender",
           tags$a(href = "https://www.kapacity.dk/cookies/", "Kapacitys betingelser"),
           "for opbevaring af mine data *"
         ),
@@ -161,7 +203,7 @@ ui <- fluidPage(
           cellWidths = c("40%", "40%"),
           actionButton("start", "Start!", style =
                          "background-color: #85c8f0; border-color: #85c8f0; border-radius: 12px"),
-          actionButton("reset", "Reset", style =
+          actionButton("reset", "Nulstil", style =
                          "background-color: #85c8f0; border-color: #85c8f0; border-radius: 12px"),
           align = "center",
           style = "margin-top: 50px;"
