@@ -24,7 +24,7 @@ container <- storage_container(endpoint, "aicompetition")
 ### STYLING ###
 gold  <- "#c39f5e"
 blue  <- "#85c8f0"
-
+padding_sides <- "padding"
 
 theme <- bs_theme(
   #bg = "white",
@@ -60,8 +60,8 @@ css <- HTML(
   border-radius: 25px 25px 25px 25px;
   border: 2px solid black}
 
-#sidebar {background-color: white;}
-
+#sidebar {
+  background-color: white;}
 "
 )
 
@@ -70,6 +70,8 @@ padding:1em;
 background-color:
 black;color:white;
 font-family: 'Open Sans';
+font-size: 18px !important;
+line-height: 1.5;
 "
 
 black_style_header <- "
@@ -78,13 +80,14 @@ background-color:black;
 color:white;
 font-family: 'Ubuntu' !important;
 font-weight:300 !important;
-font-size:40px !important;
+font-size: 56px !important;
 padding-top: 1em;
 "
+
 black_style_title <- "
 font-family: 'Ubuntu' !important;
 font-weight:300 !important;
-padding-left: 75px;
+padding-left: 150px;
 "
   
 white_style <- "
@@ -93,8 +96,10 @@ padding:2em;
 background-color:white;
 color:black;
 font-family: 'Open Sans' !important;
-padding-left: -75px;
-padding-right: 100px;
+font-size: 18px !important;
+padding-left: -125px;
+padding-right: 150px;
+line-height: 1.5;
 "
 
 white_style_header <- "
@@ -103,10 +108,38 @@ padding:1em;
 background-color:white;
 color:black;
 font-family: 'Ubuntu' !important;
-font-weight:300 !important;
-font-size:xx-large !important;
+font-weight: 300 !important;
+font-size: 32px !important;
 padding-top: 1em;
-padding-left: 75px;
+padding-left: 150px;
+"
+
+white_style_header2 <- "
+margin:0em;
+padding:1em;
+background-color:white;
+color:black;
+font-family: 'Ubuntu' !important;
+font-weight:300 !important;
+font-size: 32px !important;
+padding-top: 1em;
+padding-left: 50px;
+"
+rendered_text <- "
+margin-top:30px;
+margin-bottom:-10px;
+background-color:white;
+color:black;
+font-family: 'Open Sans' !important;
+font-size: 24px !important;
+"
+
+button_style <- "
+background-color: #85c8f0; 
+border-color: #85c8f0; 
+border-radius: 12px;
+font-family: 'Open Sans';
+font-size: 18px !important;
 "
 
 
@@ -151,8 +184,8 @@ ui <- fluidPage(
   
   # INSTRUCTIONS
   fluidRow(style="margin:0em:",
-    column(6, style = white_style_header,
-           p("Start her!")
+    column(6,
+           p("Start her!",style = white_style_header)
            ),
     column(6,
     style = white_style,
@@ -175,7 +208,7 @@ ui <- fluidPage(
   sidebarLayout(
     
     # SIDEBAR
-    sidebarPanel(id="sidebar",style="margin-left:75px;",
+    sidebarPanel(id="sidebar",style="margin-left:150px;",
       width = 4,
       textInput("name", label=NULL, placeholder = "Dit navn"),
       textInput("mail", label=NULL, placeholder = "E-mailadresse"),
@@ -224,7 +257,7 @@ ui <- fluidPage(
         label = tags$span(
           "Minimum node size",
           tags$i(class = "glyphicon glyphicon-info-sign",
-                 title = "Her skal du beslutte hvor mange datapunkter der må være i hvert 'blad', dvs. efter sidste forgrening. Jo flere datapunkter, desto mindre bliver 'træerne'. Den rette størrelse giver bedre præcision.")
+                 title = "Her skal du beslutte hvor mange datapunkter der må være i hvert 'blad', dvs. efter sidste forgrening. Jo flere datapunkter, desto mindre bliver 'træerne'. For små træer kan lede til såkaldt 'underfitting', hvorimod for store træer kan lede til 'overfitting'.")
         ),
         min = 1,
         max = 50,
@@ -245,10 +278,8 @@ ui <- fluidPage(
         12,
         splitLayout(
           cellWidths = c("40%", "40%"),
-          actionButton("start", "Start!", style =
-                         "background-color: #85c8f0; border-color: #85c8f0; border-radius: 12px"),
-          actionButton("reset", "Nulstil", style =
-                         "background-color: #85c8f0; border-color: #85c8f0; border-radius: 12px"),
+          actionButton("start", "Start!", style = button_style),
+          actionButton("reset", "Nulstil", style = button_style),
           align = "center",
           style = "margin-top: 50px;"
         )
@@ -257,19 +288,38 @@ ui <- fluidPage(
     
     # OUTPUT
     mainPanel(
-      p("Din score", style=white_style_header),
+      p(
+        "Din score", style = white_style_header2
+        ),
       gaugeOutput("gauge", height = "30%"),
-      fluidRow(h3(
-        textOutput("result", inline = TRUE),
-        align = "center",
-        style = "margin-top: 50px;font-family: 'Open Sans' !important;")),
-        fluidRow(h3(
-        textOutput("thanks", inline = TRUE),
-        align = "center",
-        style = "margin-top: 50px;font-family: 'Open Sans' !important;"))
+      fluidRow(column(8,
+        p(
+          textOutput("result_tp", inline = TRUE),
+          #align = "center",
+          style = rendered_text)
+        )
+      ),
+      fluidRow(column(8,
+        p(
+          textOutput("result_fp", inline = TRUE),
+          #align = "center",
+          style =  rendered_text)
+        )
+      ),
+      fluidRow(column(8,
+        p(
+          textOutput("thanks", inline = TRUE),
+          #align = "center",
+          style = rendered_text)
+        )
+      )
       
       ) # main panel
-  ) # sidebar layout
+  ), # sidebar layout
+  
+  # add space at bottom
+  fluidRow(h1("")), 
+  fluidRow(h1(""))
 ) # page
 
 ### SERVER ###
@@ -295,15 +345,44 @@ server <- function(input, output, session) {
   observeEvent(input$start, {
     iv$enable()
     
+    # Train model and get results
+    set.seed(7223)
+    train <- train %>% select(all_of(input$vars), Attrition)
+    test <- test %>% select(all_of(input$vars), Attrition)
+    task <- makeClassifTask(data = train, target = "Attrition")
+    base_clf <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
+    tuned_clf <- setHyperPars(
+      base_clf,
+      ntree = input$ntree,
+      mtry  = input$mtry,
+      nodesize = input$nodesize
+    )
+    mod <- mlr::train(tuned_clf, task)
+    pred <- predict(mod, newdata = test)
+    n_vars <- length(input$vars) - 3
+    n_trees <- input$ntree
+    
+    # detailed results
+    true_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
+    false_pos <- pred %>% as_tibble() %>% filter(truth == "No"  & response == "Yes") %>% nrow()
+    all_pos   <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
+    result_text_tp <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
+    result_text_fp <- paste0("I ", false_pos, " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert")
+    
+    if (n_vars > 0) {
+      acc <- (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
+    } else {
+      acc <- round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
+    }
+    
     # Collect user data and score
     name       <- input$name
     mail       <- input$mail
     initials   <- input$initials
-    score      <- acc()
+    score      <- acc
     permission_mail <- input$confirm_mail_list
     permission <- input$confirm
     time       <- now()
-    
     
     data <-
       tibble(name,
@@ -318,6 +397,7 @@ server <- function(input, output, session) {
     print(data)
     
     if (nrow(data) == 1) {
+      
       # write csv
       filename <- paste0(mail, ".csv")
       write_csv(data, filename, col_names = F)
@@ -336,69 +416,101 @@ server <- function(input, output, session) {
                      src = filename,
                      dest = paste0("archive/", filename))
       
+      
+      delay(1500,
+      output$gauge <- renderGauge({
+        gauge(
+          acc,
+          min = 0,
+          max = 100,
+          symbol = "%",
+          sectors = gaugeSectors(
+            success = c(0, 40),
+            warning = c(40, 60),
+            danger = c(60, 100),
+            colors = c(gold, gold, gold)
+          )
+        ) # gauge
+      }) # renderGauge
+      ) # delay
+      
+      # show results text
+      delay(3000,
+            output$result_tp <-
+              renderText({
+                result_text_tp
+              })
+            )
+      
+      delay(4500,
+            output$result_fp <-
+              renderText({
+                result_text_fp
+              }))
+
       # Send thanks
-      delay(2500,
+      delay(6000,
             output$thanks <-
               renderText({
                 "Tak for din deltagelse!"
               }))
       
-    } # if
+    } # if nrow data == 1
   }) # observeEvent start
   
   # train model and get accuracy
-  acc <- eventReactive(input$start, {
-    
-    set.seed(7223)
-    train <- train %>% select(all_of(input$vars), Attrition)
-    test <- test %>% select(all_of(input$vars), Attrition)
-    task = makeClassifTask(data = train, target = "Attrition")
-    base_clf = makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
-    tuned_clf = setHyperPars(
-      base_clf,
-      ntree = input$ntree,
-      mtry  = input$mtry,
-      nodesize = input$nodesize
-    )
-    mod = mlr::train(tuned_clf, task)
-    pred = predict(mod, newdata = test)
-    n_vars = length(input$vars) - 3
-    n_trees = input$ntree
-    
-    # detailed results
-    true_pos <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
-    all_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
-    result_text <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
-    
-    delay(1500,
-          output$result <-
-            renderText({
-              result_text
-            }))
-
-    if (n_vars > 0) {
-      (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
-    } else {
-      round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
-    }
-    
-  }) # eventReactive
+  # acc <- eventReactive(input$start, {
+  # 
+  #   set.seed(7223)
+  #   train <- train %>% select(all_of(input$vars), Attrition)
+  #   test <- test %>% select(all_of(input$vars), Attrition)
+  #   task <- makeClassifTask(data = train, target = "Attrition")
+  #   base_clf <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
+  #   tuned_clf <- setHyperPars(
+  #     base_clf,
+  #     ntree = input$ntree,
+  #     mtry  = input$mtry,
+  #     nodesize = input$nodesize
+  #   )
+  #   mod <- mlr::train(tuned_clf, task)
+  #   pred <- predict(mod, newdata = test)
+  #   n_vars <- length(input$vars) - 3
+  #   n_trees <- input$ntree
+  #   
+  #   # detailed results
+  #   true_pos <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
+  #   all_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
+  #   result_text <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
+  #   
+  #   delay(1500,
+  #         output$result <-
+  #           renderText({
+  #             result_text
+  #           }))
+  # 
+  #   if (n_vars > 0) {
+  #     (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
+  #   } else {
+  #     round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
+  #   }
+  #   
+  # }) # eventReactive
   
   observeEvent(input$start, {
-    output$gauge <- renderGauge({
-      gauge(
-        acc(),
-        min = 0,
-        max = 100,
-        symbol = "%",
-        sectors = gaugeSectors(
-          success = c(0, 40),
-          warning = c(40, 60),
-          danger = c(60, 100),
-          colors = c(gold, gold, gold)
-        )
-      ) # gauge
-    }) # renderGauge
+    # output$gauge <- renderGauge({
+    #   gauge(
+    #     acc(),
+    #     min = 0,
+    #     max = 100,
+    #     symbol = "%",
+    #     sectors = gaugeSectors(
+    #       success = c(0, 40),
+    #       warning = c(40, 60),
+    #       danger = c(60, 100),
+    #       colors = c(gold, gold, gold)
+    #     )
+    #   ) # gauge
+    # }) # renderGauge
   })
   
   observeEvent(input$reset, {
@@ -415,8 +527,10 @@ server <- function(input, output, session) {
     
     output$gauge <- renderGauge({})
     
-    output$result <-renderText({})
-  
+    output$result_tp <-renderText({})
+    
+    output$result_fp <-renderText({})
+    
     output$thanks <- renderText({})
 
   }) # observeEvent reset
