@@ -31,8 +31,8 @@ theme <- bs_theme(
   #fg = "black",
   primary = blue,
   secondary = blue,
-  base_font = font_google("Open Sans"),
-  heading_font = font_google("Ubuntu"),
+  #base_font = font_google("Open Sans"),
+  #heading_font = font_google("Ubuntu"),
 )
 
 css <- HTML(
@@ -65,8 +65,33 @@ css <- HTML(
 "
 )
 
-black_style <- "padding:1em;background-color:black;color:white;"
-white_style <- "margin:0em;padding:2em;background-color:white;color:black;"
+black_style <- "padding:1em;background-color:black;color:white;font-family: 'Open Sans';"
+black_style_header <- "
+padding:0em;
+background-color:black;
+color:white;
+font-family: 'Ubuntu' !important;
+font-weight:300 !important;
+font-size:40px !important;
+padding-top: 1em
+"
+black_style_title <- "
+font-family: 'Ubuntu' !important;
+font-weight:300 !important;
+"
+  
+white_style <- "margin:0em;padding:2em;background-color:white;color:black;font-family: 'Open Sans' !important;"
+white_style_header <- "
+margin:0em;
+padding:1em;
+background-color:white;
+color:black;
+font-family: 'Ubuntu' !important;
+font-weight:300 !important;
+font-size:xx-large !important;
+padding-top: 1em;
+"
+
 
 ### DATA ###
 vars  <- read_rds("vars_attr.rds")
@@ -79,15 +104,15 @@ test  <- read.csv("attr_test.csv") %>%
 ui <- fluidPage(
   theme = theme,
   useShinyjs(),
-  tags$head(tags$style(css)),
+  tags$head(tags$style(css),tags$title('kapacity AI konkurrence')),
   
   # TITLE
-  titlePanel(h5(id = "title_panel", "kapacity")),
+  titlePanel(p(id = "title_panel", "kapacity",style=black_style_title)),
   
   # HEADER
   fluidRow(
-    column(12,align = "center",style = black_style,
-           h1("AI konkurrence!")
+    column(12,align = "center",style = black_style_header,
+           p("AI konkurrence!")
            )
     ),
   
@@ -109,8 +134,8 @@ ui <- fluidPage(
   
   # INSTRUCTIONS
   fluidRow(style="margin:0em:",
-    column(6,
-           h3("Start her!")
+    column(6, style = white_style_header,
+           p("Start her!")
            ),
     column(6,
     style = white_style,
@@ -131,6 +156,8 @@ ui <- fluidPage(
   hr(),
    
   sidebarLayout(
+    
+    # SIDEBAR
     sidebarPanel(id="sidebar",
       width = 3,
       textInput("name", label=NULL, placeholder = "Dit navn"),
@@ -209,10 +236,11 @@ ui <- fluidPage(
           style = "margin-top: 50px;"
         )
       )
-    ),
-    #sidebarPanel
+    ), #sidebarPanel
+    
+    # OUTPUT
     mainPanel(
-      h3("Din score"),
+      p("Din score", style=white_style_header),
       gaugeOutput("gauge", height = "30%"),
       fluidRow(h3(
         textOutput("result", inline = TRUE),
