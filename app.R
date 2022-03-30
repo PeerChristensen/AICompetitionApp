@@ -65,7 +65,13 @@ css <- HTML(
 "
 )
 
-black_style <- "padding:1em;background-color:black;color:white;font-family: 'Open Sans';"
+black_style <- "
+padding:1em;
+background-color:
+black;color:white;
+font-family: 'Open Sans';
+"
+
 black_style_header <- "
 padding:0em;
 background-color:black;
@@ -73,14 +79,24 @@ color:white;
 font-family: 'Ubuntu' !important;
 font-weight:300 !important;
 font-size:40px !important;
-padding-top: 1em
+padding-top: 1em;
 "
 black_style_title <- "
 font-family: 'Ubuntu' !important;
 font-weight:300 !important;
+padding-left: 75px;
 "
   
-white_style <- "margin:0em;padding:2em;background-color:white;color:black;font-family: 'Open Sans' !important;"
+white_style <- "
+margin:0em;
+padding:2em;
+background-color:white;
+color:black;
+font-family: 'Open Sans' !important;
+padding-left: -75px;
+padding-right: 100px;
+"
+
 white_style_header <- "
 margin:0em;
 padding:1em;
@@ -90,6 +106,7 @@ font-family: 'Ubuntu' !important;
 font-weight:300 !important;
 font-size:xx-large !important;
 padding-top: 1em;
+padding-left: 75px;
 "
 
 
@@ -158,8 +175,8 @@ ui <- fluidPage(
   sidebarLayout(
     
     # SIDEBAR
-    sidebarPanel(id="sidebar",
-      width = 3,
+    sidebarPanel(id="sidebar",style="margin-left:75px;",
+      width = 4,
       textInput("name", label=NULL, placeholder = "Dit navn"),
       textInput("mail", label=NULL, placeholder = "E-mailadresse"),
       textInput("initials", label = NULL, placeholder = "Dine initialer (vises på leaderboard)"),
@@ -245,11 +262,11 @@ ui <- fluidPage(
       fluidRow(h3(
         textOutput("result", inline = TRUE),
         align = "center",
-        style = "margin-top: 50px;")),
+        style = "margin-top: 50px;font-family: 'Open Sans' !important;")),
         fluidRow(h3(
         textOutput("thanks", inline = TRUE),
         align = "center",
-        style = "margin-top: 50px;margin-left: 300px;"))
+        style = "margin-top: 50px;font-family: 'Open Sans' !important;"))
       
       ) # main panel
   ) # sidebar layout
@@ -396,8 +413,11 @@ server <- function(input, output, session) {
     reset("confirm_mail_list")
     reset("confirm")
     
-    output$gauge <- renderGauge({
-    })
+    output$gauge <- renderGauge({})
+    
+    output$result <-renderText({})
+  
+    output$thanks <- renderText({})
 
   }) # observeEvent reset
   
