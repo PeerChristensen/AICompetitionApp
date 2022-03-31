@@ -348,9 +348,9 @@ server <- function(input, output, session) {
     # Train model and get results
     set.seed(7223)
     train <- train %>% select(all_of(input$vars), Attrition)
-    test <- test %>% select(all_of(input$vars), Attrition)
-    task <- makeClassifTask(data = train, target = "Attrition")
-    base_clf <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
+    test  <- test  %>% select(all_of(input$vars), Attrition)
+    task  <- makeClassifTask(data = train, target = "Attrition")
+    base_clf  <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
     tuned_clf <- setHyperPars(
       base_clf,
       ntree = input$ntree,
@@ -359,7 +359,7 @@ server <- function(input, output, session) {
     )
     mod <- mlr::train(tuned_clf, task)
     pred <- predict(mod, newdata = test)
-    n_vars <- length(input$vars) - 3
+    n_vars <- length(input$vars)
     n_trees <- input$ntree
     
     # detailed results
@@ -371,8 +371,8 @@ server <- function(input, output, session) {
     result_text_tp <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
     result_text_fp <- paste0("I ", false_pos, " ud af ", all_neg, " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert")
     
-    if (n_vars > 0) {
-      acc <- (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
+    if (n_vars > 3) {
+      acc <- (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - ((n_vars-3) * 1) - (n_trees * 0.01)
     } else {
       acc <- round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
     }
@@ -459,61 +459,6 @@ server <- function(input, output, session) {
       
     } # if nrow data == 1
   }) # observeEvent start
-  
-  # train model and get accuracy
-  # acc <- eventReactive(input$start, {
-  # 
-  #   set.seed(7223)
-  #   train <- train %>% select(all_of(input$vars), Attrition)
-  #   test <- test %>% select(all_of(input$vars), Attrition)
-  #   task <- makeClassifTask(data = train, target = "Attrition")
-  #   base_clf <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
-  #   tuned_clf <- setHyperPars(
-  #     base_clf,
-  #     ntree = input$ntree,
-  #     mtry  = input$mtry,
-  #     nodesize = input$nodesize
-  #   )
-  #   mod <- mlr::train(tuned_clf, task)
-  #   pred <- predict(mod, newdata = test)
-  #   n_vars <- length(input$vars) - 3
-  #   n_trees <- input$ntree
-  #   
-  #   # detailed results
-  #   true_pos <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
-  #   all_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
-  #   result_text <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
-  #   
-  #   delay(1500,
-  #         output$result <-
-  #           renderText({
-  #             result_text
-  #           }))
-  # 
-  #   if (n_vars > 0) {
-  #     (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
-  #   } else {
-  #     round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
-  #   }
-  #   
-  # }) # eventReactive
-  
-  observeEvent(input$start, {
-    # output$gauge <- renderGauge({
-    #   gauge(
-    #     acc(),
-    #     min = 0,
-    #     max = 100,
-    #     symbol = "%",
-    #     sectors = gaugeSectors(
-    #       success = c(0, 40),
-    #       warning = c(40, 60),
-    #       danger = c(60, 100),
-    #       colors = c(gold, gold, gold)
-    #     )
-    #   ) # gauge
-    # }) # renderGauge
-  })
   
   observeEvent(input$reset, {
     iv$disable()
