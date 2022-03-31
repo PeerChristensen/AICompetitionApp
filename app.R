@@ -366,8 +366,10 @@ server <- function(input, output, session) {
     true_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
     false_pos <- pred %>% as_tibble() %>% filter(truth == "No"  & response == "Yes") %>% nrow()
     all_pos   <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
+    all_neg   <- pred %>% as_tibble() %>% filter(truth == "No") %>% nrow()
+    
     result_text_tp <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
-    result_text_fp <- paste0("I ", false_pos, " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert")
+    result_text_fp <- paste0("I ", false_pos, " ud af ", all_neg, " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert")
     
     if (n_vars > 0) {
       acc <- (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - (n_vars * 1) - (n_trees * 0.01)
