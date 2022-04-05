@@ -191,7 +191,7 @@ ui <- fluidPage(
     column(6,
     style = white_style,
     p(
-      "I 2021 overvejede 40 pct. af alle medarbejdere at opstige deres stilling. Din opgave er at træne en AI-model, der kan forudsige, hvilke ansatte det drejer sig om i din virksomhed, så opsigelserne kan undgås."),
+      "I 2021 overvejede 40 pct. af alle medarbejdere at opsige deres stilling. Din opgave er at træne en AI-model, der kan forudsige, hvilke ansatte det drejer sig om, så opsigelserne kan undgås."),
     p(
       "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."    ),
     p(
@@ -199,7 +199,7 @@ ui <- fluidPage(
     p(
       "Du er velkommen til at prøve flere gange, men kun det bedste af dine tre første forsøg tæller med i konkurrencen."
     ),
-    p("Konkurrencen slutter kl. 16:30, og vi kontakter vinderen umiddelbart efter."),
+    p("Konkurrencen slutter kl. 17:00, og vi kontakter vinderen umiddelbart efter."),
     p(
       "Deltagelse forudsætter tilmelding til Kapacitys nyhedsmail om AI.",tags$br(),
       "Kun deltagere i Kunstig Intelligens i praksis-konferencen kan deltage i konkurrencen."
