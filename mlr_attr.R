@@ -33,3 +33,24 @@ calculateROCMeasures(pred)$confusion.matrix
 round(calculateROCMeasures(pred)$measures$acc,5)*100
 
 
+library(h2o)
+h2o.init()
+
+train_hf = as.h2o(train)
+test_hf = as.h2o(test)
+
+y <- "Attrition"
+x <- setdiff(names(train), y)
+
+aml <- h2o.automl(x = x, y = y,
+									training_frame = train_hf,
+									max_runtime_secs = 100,
+									seed = 1)
+
+aml@leaderboard
+
+model <- aml@leader
+
+perf <- h2o.performance(model,test_hf)
+perf
+

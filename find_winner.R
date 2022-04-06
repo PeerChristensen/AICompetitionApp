@@ -16,6 +16,7 @@ storage_download(container, "leaderboard/leaderboard.csv","leaderboard.csv",over
 df <- read_csv("leaderboard.csv") %>%
 	drop_na() %>%
 	mutate(time = as.POSIXct(time)) %>%
+	mutate(mail = tolower(mail)) %>%
 	group_by(mail) %>%
 	slice_min(time, n = 3) %>%
 	filter(score == max(score)) %>%
@@ -27,3 +28,7 @@ df <- read_csv("leaderboard.csv") %>%
 	mutate(initials = str_trunc(initials, 4, ellipsis="")) %>%
 	mutate(Navn = paste0(rank,".  ",toupper(initials))) %>%
 	slice(1:10)
+
+
+df %>%
+	filter(permission == FALSE | permission_mail == FALSE)
