@@ -70,78 +70,84 @@ black_style <- "
 padding:1em;
 background-color:
 black;color:white;
-font-family: 'Open Sans';
 font-size: 18px !important;
 line-height: 1.5;
 "
+#font-family: 'Open Sans';
+
 
 black_style_header <- "
 padding:0em;
 background-color:black;
 color:white;
-font-family: 'Ubuntu' !important;
 font-weight:300 !important;
 font-size: 56px !important;
 padding-top: 1em;
 "
+#font-family: 'Ubuntu' !important;
+
 
 black_style_title <- "
-font-family: 'Ubuntu' !important;
 font-weight:300 !important;
 padding-left: 150px;
 "
+# font-family: 'Ubuntu' !important;
+
   
 white_style <- "
 margin:0em;
 padding:2em;
 background-color:white;
 color:black;
-font-family: 'Open Sans' !important;
 font-size: 18px !important;
 padding-left: -125px;
 padding-right: 150px;
 line-height: 1.5;
 "
+#font-family: 'Open Sans' !important;
 
 white_style_header <- "
 margin:0em;
 padding:1em;
 background-color:white;
 color:black;
-font-family: 'Ubuntu' !important;
 font-weight: 300 !important;
 font-size: 32px !important;
 padding-top: 1em;
 padding-left: 150px;
 "
+# font-family: 'Ubuntu' !important;
+
 
 white_style_header2 <- "
 margin:0em;
 padding:1em;
 background-color:white;
 color:black;
-font-family: 'Ubuntu' !important;
 font-weight:300 !important;
 font-size: 32px !important;
 padding-top: 1em;
 padding-left: 50px;
 "
+#font-family: 'Ubuntu' !important;
+
+
 rendered_text <- "
 margin-top:30px;
 margin-bottom:-10px;
 background-color:white;
 color:black;
-font-family: 'Open Sans' !important;
 font-size: 24px !important;
 "
+# font-family: 'Open Sans' !important;
 
 button_style <- "
 background-color: #85c8f0; 
 border-color: #85c8f0; 
 border-radius: 12px;
-font-family: 'Open Sans';
 font-size: 18px !important;
 "
+# font-family: 'Open Sans';
 
 
 ### DATA ###
@@ -398,7 +404,7 @@ server <- function(input, output, session) {
              permission,
              time) %>%
       mutate(time = as.character(time)) %>%
-      filter(permission == T, name != "", mail != "", initials != "")
+      filter(permission == T, permission_mail == T, name != "", mail != "", initials != "")
     print(data)
     
     if (nrow(data) == 1) {
