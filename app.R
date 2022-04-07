@@ -1,3 +1,12 @@
+###################################################
+# KAPACITY AI COMPETITION
+# Desktop version
+
+# April 2022
+# Peer Christensen
+###################################################
+
+# shiny packages
 library(shiny)
 library(shinyWidgets)
 library(flexdashboard)
@@ -5,27 +14,33 @@ library(bslib)
 library(shinyBS)
 library(shinyjs)
 library(shinydashboard)
+library(shinyvalidate)
+
+# R/tidyverse and ML
 library(tidyverse)
 library(lubridate)
 library(randomForest)
 library(mlr)
-library(shinyvalidate)
+
+# Azure storage
 library(AzureStor)
 
 
-# CONNECTING TO BLOB STORAGE
+# --- CONNECTING TO BLOB STORAGE ---------------------------------
+
 readRenviron(".Renviron")
 sas_token <- Sys.getenv("SAS_TOKEN")
-endpoint <-
-  storage_endpoint("https://demoeventstorage.blob.core.windows.net", sas =
-                     sas_token)
+endpoint  <-
+  storage_endpoint("https://demoeventstorage.blob.core.windows.net",
+                   sas = sas_token)
 container <- storage_container(endpoint, "aicompetition")
 
-### STYLING ###
+# --- STYLING -----------------------------------------------------
+
+### colours
 gold  <- "#c39f5e"
 #light_gold <- "#f9f5ef"
 blue  <- "#85c8f0"
-padding_sides <- "padding"
 
 theme <- bs_theme(
   #bg = "white",
@@ -34,8 +49,17 @@ theme <- bs_theme(
   secondary = blue,
   #base_font = font_google("Open Sans"),
   #heading_font = font_google("Ubuntu"),
-)
+  )
+  
+### CSS
 
+  # This could be placed in a separate file
+  # There's a lot of repetition here,
+  # which can be avoided by using inheritance among elements
+  # The commented lines with font-family are currently ignored,
+  # because some desktop and mobile systems seem to override these fonts
+  # in favour of Times New Roman. However, the Shiny default (used here) works fine.
+  
 css <- HTML(
   "
 .html-widget.gauge svg {
@@ -64,7 +88,7 @@ css <- HTML(
 #sidebar {
   background-color: white;}
 "
-)
+  )
 
 black_style <- "
 padding:1em;
@@ -74,7 +98,6 @@ font-size: 18px !important;
 line-height: 1.5;
 "
 #font-family: 'Open Sans';
-
 
 black_style_header <- "
 padding:0em;
@@ -86,14 +109,12 @@ padding-top: 1em;
 "
 #font-family: 'Ubuntu' !important;
 
-
 black_style_title <- "
 font-weight:300 !important;
 padding-left: 150px;
 "
 # font-family: 'Ubuntu' !important;
 
-  
 white_style <- "
 margin:0em;
 padding:2em;
@@ -118,7 +139,6 @@ padding-left: 150px;
 "
 # font-family: 'Ubuntu' !important;
 
-
 white_style_header2 <- "
 margin:0em;
 padding:1em;
@@ -131,7 +151,6 @@ padding-left: 50px;
 "
 #font-family: 'Ubuntu' !important;
 
-
 rendered_text <- "
 margin-top:30px;
 margin-bottom:-10px;
@@ -142,85 +161,110 @@ font-size: 24px !important;
 # font-family: 'Open Sans' !important;
 
 button_style <- "
-background-color: #85c8f0; 
-border-color: #85c8f0; 
+background-color: #85c8f0;
+border-color: #85c8f0;
 border-radius: 12px;
 font-size: 18px !important;
 "
 # font-family: 'Open Sans';
 
 
-### DATA ###
+# --- DATA -----------------------------------------------------
+
 vars  <- read_rds("vars_attr.rds")
 train <- read.csv("attr_train.csv") %>%
   mutate_if(is.character, factor)
 test  <- read.csv("attr_test.csv") %>%
   mutate_if(is.character, factor)
 
-### UI ###
+
+# --- UI ---------------------------------------------------------
+
 ui <- fluidPage(
   theme = theme,
   useShinyjs(),
-  tags$head(tags$style(css),tags$title('kapacity AI konkurrence')),
+  tags$head(tags$style(css), tags$title('kapacity AI konkurrence')),
   
   # TITLE
-  titlePanel(p(id = "title_panel", "kapacity",style=black_style_title)),
+  titlePanel(p(
+    id = "title_panel", "kapacity", style = black_style_title
+  )),
   
   # HEADER
-  fluidRow(
-    column(12,align = "center",style = black_style_header,
-           p("AI konkurrence!")
-           )
-    ),
+  fluidRow(column(
+    12, align = "center", style = black_style_header,
+    p("AI konkurrence!")
+  )),
   
   # INTRO
   fluidRow(
     column(4, style = black_style),
-    column(4,align="center",style = black_style,
-           p("Kan du træne vores AI-model, så du stopper medarbejderflugten i din virksomhed?")
+    column(
+      4,
+      align = "center",
+      style = black_style,
+      p(
+        "Kan du træne vores AI-model, så du stopper medarbejderflugten i din virksomhed?"
+      )
     ),
     column(4, style = black_style)
   ),
-  fluidRow(
-    column(4, style = black_style),
-    column(4, align="center", style = black_style,
-           p("Vi belønner dagens bedste forsøg med en champagne-smagekasse til en værdi af kr. 2.899,-")
-    ),
-    column(4, style = black_style)
-  ),
+  # Use this row to mention the competition pize
+  
+  # fluidRow(
+  #    column(4, style = black_style),
+  #    column(4, align="center", style = black_style,
+  #          p("Vi belønner dagens bedste forsøg med en champagne-smagekasse til en værdi af kr. 2.899,-")
+  #  ),
+  #   column(4, style = black_style)
+  #  ),
   
   # INSTRUCTIONS
-  fluidRow(style="margin:0em:",
+  fluidRow(
+    style = "margin:0em:",
     column(6,
-           p("Start her!",style = white_style_header)
-           ),
-    column(6,
-    style = white_style,
-    p(
-      "I 2021 overvejede 40 pct. af alle medarbejdere at opsige deres stilling. Din opgave er at træne en AI-model, der kan forudsige, hvilke ansatte det drejer sig om, så opsigelserne kan undgås."),
-    p(
-      "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."    ),
-    p(
-      "Din score viser andelen af korrekte gæt på hvorvidt hver af de 616 ansatte forlader jeres virksomhed. På vores leaderboard, kan du se hvor god din model var i forhold til andres."    ),
-    p(
-      "Du er velkommen til at prøve flere gange, men kun det bedste af dine tre første forsøg tæller med i konkurrencen."
-    ),
-    p("Konkurrencen slutter kl. 17:00, og vi kontakter vinderen umiddelbart efter."),
-    p(
-      "Deltagelse forudsætter tilmelding til Kapacitys nyhedsmail om AI.",tags$br(),
-      "Kun deltagere i Kunstig Intelligens i praksis-konferencen kan deltage i konkurrencen."
-    ),
+           p("Start her!", style = white_style_header)),
+    column(
+      6,
+      style = white_style,
+      p(
+        "I 2021 overvejede 40 pct. af alle medarbejdere at opsige deres stilling. Din opgave er at træne en AI-model, der kan forudsige, hvilke ansatte det drejer sig om, så opsigelserne kan undgås."
+      ),
+      p(
+        "Vælg en kombination af de rette variabler (features) der bedst forudsiger medarbejderflugt og indstil dine hyperparametre for at træne en model."
+      ),
+      p(
+        "Din score viser andelen af korrekte gæt på hvorvidt hver af de 616 ansatte forlader jeres virksomhed. På vores leaderboard, kan du se hvor god din model var i forhold til andres."
+      ),
+      p(
+        "Du er velkommen til at prøve flere gange, men kun det bedste af dine tre første forsøg tæller med i konkurrencen."
+      ),
+      
+      # Specify when the competition ends
+      # p("Konkurrencen slutter kl. 17:00, og vi kontakter vinderen umiddelbart efter."),
+      
+      p(
+        "Deltagelse forudsætter tilmelding til Kapacitys nyhedsmail om AI.",
+        tags$br(),
+        
+        # Specify who can participate
+        # "Kun deltagere i Kunstig Intelligens i praksis-konferencen kan deltage i konkurrencen."
+      ),
     )
-    ),
+  ),
   hr(),
-   
+  
   sidebarLayout(
     
     # SIDEBAR
-    sidebarPanel(id="sidebar",style="margin-left:150px;",
+    sidebarPanel(
+      id = "sidebar",
+      style = "margin-left:150px;",
       width = 4,
-      textInput("name", label=NULL, placeholder = "Dit navn"),
-      textInput("mail", label=NULL, placeholder = "E-mailadresse"),
+      
+      # GET USER INFO AND PERMISSIONS
+      textInput("name", label = NULL, placeholder = "Dit navn"),
+      textInput("mail", label = NULL, placeholder = "E-mailadresse"),
       textInput("initials", label = NULL, placeholder = "Dine initialer (vises på leaderboard)"),
       checkboxInput(
         "confirm_mail_list",
@@ -236,6 +280,8 @@ ui <- fluidPage(
         ),
         FALSE
       ),
+      
+      # USER CHOICES
       pickerInput(
         "vars",
         label = tags$span(
@@ -245,9 +291,7 @@ ui <- fluidPage(
         ),
         choices = vars,
         multiple = TRUE,
-        options = list(
-          `none-selected-text` = "Intet valgt"
-        )
+        options = list(`none-selected-text` = "Intet valgt")
         #options = list(`max-options` = 4)
       ),
       sliderInput(
@@ -283,6 +327,8 @@ ui <- fluidPage(
         max = 100,
         value = 50
       ),
+      
+      # ACTION BUTTONS
       column(
         12,
         splitLayout(
@@ -293,48 +339,45 @@ ui <- fluidPage(
           style = "margin-top: 50px;"
         )
       )
-    ), #sidebarPanel
+    ), #sidebarPanel end
     
-    # OUTPUT
+    # OUTPUT PANEL
     mainPanel(
-      p(
-        "Din score", style = white_style_header2
-        ),
+      p("Din score", style = white_style_header2),
       gaugeOutput("gauge", height = "30%"),
       fluidRow(column(8,
-        p(
-          textOutput("result_tp", inline = TRUE),
-          #align = "center",
-          style = rendered_text)
-        )
-      ),
+                      p(
+                        textOutput("result_tp", inline = TRUE),
+                        #align = "center",
+                        style = rendered_text
+                      ))),
       fluidRow(column(8,
-        p(
-          textOutput("result_fp", inline = TRUE),
-          #align = "center",
-          style =  rendered_text)
-        )
-      ),
+                      p(
+                        textOutput("result_fp", inline = TRUE),
+                        #align = "center",
+                        style =  rendered_text
+                      ))),
       fluidRow(column(8,
-        p(
-          textOutput("thanks", inline = TRUE),
-          #align = "center",
-          style = rendered_text)
-        )
-      )
+                      p(
+                        textOutput("thanks", inline = TRUE),
+                        #align = "center",
+                        style = rendered_text
+                      )))
       
-      ) # main panel
-  ), # sidebar layout
+    ) # main panel end
+  ), # sidebar layout end
   
-  # add space at bottom
-  fluidRow(h1("")), 
+  # ADD SPACE AT BOTTOM
+  fluidRow(h1("")),
   fluidRow(h1(""))
-) # page
+) # fluidPage end
 
-### SERVER ###
+
+# --- SERVER -----------------------------------------------------
 
 server <- function(input, output, session) {
-  # Validate input
+  
+  # INPUT VALIDATION
   iv <- InputValidator$new()
   iv$add_rule("name", sv_required(message = "Påkrævet"))
   iv$add_rule("initials", sv_required(message = "Påkrævet"))
@@ -351,15 +394,17 @@ server <- function(input, output, session) {
   )
   iv$disable()
   
+  # LOGIC WHEN USER CLICKS "START"
   observeEvent(input$start, {
     iv$enable()
     
-    # Train model and get results
+    # TRAIN MODEL, GET RESULTS
     set.seed(7223)
     train <- train %>% select(all_of(input$vars), Attrition)
     test  <- test  %>% select(all_of(input$vars), Attrition)
     task  <- makeClassifTask(data = train, target = "Attrition")
-    base_clf  <- makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
+    base_clf  <-
+      makeLearner("classif.randomForest", fix.factors.prediction = FALSE)
     tuned_clf <- setHyperPars(
       base_clf,
       ntree = input$ntree,
@@ -371,22 +416,55 @@ server <- function(input, output, session) {
     n_vars <- length(input$vars)
     n_trees <- input$ntree
     
-    # detailed results
-    true_pos  <- pred %>% as_tibble() %>% filter(truth == "Yes" & response == "Yes") %>% nrow()
-    false_pos <- pred %>% as_tibble() %>% filter(truth == "No"  & response == "Yes") %>% nrow()
-    all_pos   <- pred %>% as_tibble() %>% filter(truth == "Yes") %>% nrow()
-    all_neg   <- pred %>% as_tibble() %>% filter(truth == "No") %>% nrow()
+    true_pos  <- pred %>% 
+      as_tibble() %>% 
+      filter(truth == "Yes" & response == "Yes") %>% 
+      nrow()
     
-    result_text_tp <- paste0("Din model var i stand til at finde ", true_pos, " ud af ", all_pos, " ansatte, der var på vej væk.")
-    result_text_fp <- paste0("I ", false_pos, " ud af ", all_neg, " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert")
+    false_pos <- pred %>% 
+      as_tibble() %>% 
+      filter(truth == "No"  & response == "Yes") %>% 
+      nrow()
     
+    all_pos   <- pred %>% 
+      as_tibble() %>% 
+      filter(truth == "Yes") %>% 
+      nrow()
+    
+    all_neg   <- pred %>% 
+      as_tibble() %>% 
+      filter(truth == "No") %>% 
+      nrow()
+    
+    # RESULTS TEXT
+    result_text_tp <-
+      paste0(
+        "Din model var i stand til at finde ",
+        true_pos,
+        " ud af ",
+        all_pos,
+        " ansatte, der var på vej væk."
+      )
+    result_text_fp <-
+      paste0(
+        "I ",
+        false_pos,
+        " ud af ",
+        all_neg,
+        " tilfælde, hvor medarbejderne blev i virksomheden, gættede modellen forkert"
+      )
+    
+    # PENALIZING BASED ON N VARIABLES SELECTED AN N TREES
     if (n_vars > 3) {
-      acc <- (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - ((n_vars-3) * 1) - (n_trees * 0.01)
+      acc <-
+        (round(calculateROCMeasures(pred)$measures$acc, 4) * 100) - ((n_vars -
+                                                                        3) * 1) - (n_trees * 0.01)
     } else {
-      acc <- round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
+      acc <-
+        round(calculateROCMeasures(pred)$measures$acc, 4) * 100 - (n_trees * 0.01)
     }
     
-    # Collect user data and score
+    # COLLECT USER DATA AND SCORE
     name       <- input$name
     mail       <- input$mail
     initials   <- input$initials
@@ -404,16 +482,21 @@ server <- function(input, output, session) {
              permission,
              time) %>%
       mutate(time = as.character(time)) %>%
-      filter(permission == T, permission_mail == T, name != "", mail != "", initials != "")
+      filter(permission == T,
+             permission_mail == T,
+             name != "",
+             mail != "",
+             initials != "")
     print(data)
     
+    # PROCEED IF ALL USER DATA IS PROVIDED
     if (nrow(data) == 1) {
       
-      # write csv
+      # WRITE CSV
       filename <- paste0(mail, ".csv")
       write_csv(data, filename, col_names = F)
       
-      # append to leaderboard
+      # APPEND TO LEADERBOARD BLOB
       storage_upload(
         container,
         src = filename,
@@ -422,76 +505,82 @@ server <- function(input, output, session) {
         append = TRUE
       )
       
-      # store backup file
+      # STORE BACKUP FILE
       storage_upload(container,
                      src = filename,
                      dest = paste0("archive/", filename))
       
       
-      delay(1500,
-      output$gauge <- renderGauge({
-        gauge(
-          acc,
-          min = 0,
-          max = 100,
-          symbol = "%",
-          sectors = gaugeSectors(
-            success = c(0, 40),
-            warning = c(40, 60),
-            danger = c(60, 100),
-            colors = c(gold, gold, gold)
-          )
-        ) # gauge
-      }) # renderGauge
-      ) # delay
-      
-      # show results text
-      delay(3000,
-            output$result_tp <-
-              renderText({
-                result_text_tp
-              })
+      # RENDER GAUGE CHART
+      delay(
+        1500, # msec delay
+        output$gauge <- renderGauge({
+          gauge(
+            acc,
+            min = 0,
+            max = 100,
+            symbol = "%",
+            sectors = gaugeSectors(
+              success = c(0, 40),
+              warning = c(40, 60),
+              danger = c(60, 100),
+              colors = c(gold, gold, gold)
             )
-      
+          ) # gauge end
+        }) # renderGauge end
+        ) # delay end
+        
+      # RENDER RESULTS TEXT
+      delay(3000,
+              output$result_tp <-
+                renderText({
+                  result_text_tp
+                })
+            )
+        
       delay(4500,
-            output$result_fp <-
-              renderText({
-                result_text_fp
-              }))
-
-      # Send thanks
+              output$result_fp <-
+                renderText({
+                  result_text_fp
+                })
+            )
+        
+        # SAY THANKS
       delay(6000,
-            output$thanks <-
-              renderText({
-                "Tak for din deltagelse!"
-              }))
+              output$thanks <-
+                renderText({
+                  "Tak for din deltagelse!"
+                })
+            )
+        
+        } # if nrow data == 1 end
+    }) # observeEvent start end
       
-    } # if nrow data == 1
-  }) # observeEvent start
-  
-  observeEvent(input$reset, {
-    iv$disable()
-    reset("vars")
-    reset("mtry")
-    reset("nodesize")
-    reset("ntree")
-    reset("name")
-    reset("mail")
-    reset("initials")
-    reset("confirm_mail_list")
-    reset("confirm")
-    
-    output$gauge <- renderGauge({})
-    
-    output$result_tp <-renderText({})
-    
-    output$result_fp <-renderText({})
-    
-    output$thanks <- renderText({})
-
-  }) # observeEvent reset
-  
-} # Server
+      # LOGIC WHEN USER CLICKS "RESET"
+      observeEvent(input$reset, {
+        
+        iv$disable()
+        reset("vars")
+        reset("mtry")
+        reset("nodesize")
+        reset("ntree")
+        reset("name")
+        reset("mail")
+        reset("initials")
+        reset("confirm_mail_list")
+        reset("confirm")
+        
+        output$gauge <- renderGauge({})
+        
+        output$result_tp <- renderText({})
+        
+        output$result_fp <- renderText({})
+        
+        output$thanks <- renderText({})
+        
+      }) # observeEvent reset end
+      
+  } # Server end
 
 # Run the application
 shinyApp(ui = ui, server = server)
